@@ -6,12 +6,12 @@
 {% load humanize %}
 {% block title %}{% spaceless %}{{ book.title }}-{% trans "reading channel" %}{% endspaceless %}{% endblock %}
 {% block forejs %}
-       <script type="text/javascript">        
+       <script type="text/javascript">
          $().ready(function(){
             $("#nav_books").attr('className',"on");
             //$("#nav_ask").hide();
         });
-         
+
         </script>
 {% endblock %}
 {% block content %}
@@ -22,58 +22,58 @@
         </div>
         <div class="bookSummary">
             <table>
-    	        <tr>
-    	        	<td>{% trans "[author]" %}</td>
-    	        	<td><b><a href="{% url user book.user.id %}" rel="nofollow" >{{ book.author }}</a></b></td>
-    	        </tr>
-    	        <tr>
-    	        	<td>{% trans "[publisher]" %}</td>
-    	        	<td>{{ book.publication }}</td>
-    	        </tr>
                 <tr>
-    	        	<td>{% trans "[publication date]" %}</td>
-    	        	<td>{{ book.published_at|date:"Y-m" }}</td>
-    	        </tr>
+                        <td>{% trans "[author]" %}</td>
+                        <td><b><a href="{% url user book.user.id %}" rel="nofollow" >{{ book.author }}</a></b></td>
+                </tr>
                 <tr>
-    	        	<td>{% trans "[price]" %}</td>
-    	        	<td>{{ book.price }} {% trans "currency unit" %}</td>
-    	        </tr>
+                        <td>{% trans "[publisher]" %}</td>
+                        <td>{{ book.publication }}</td>
+                </tr>
                 <tr>
-    	        	<td>{% trans "[pages]" %}</td>
-    	        	<td>{{ book.pages }} {% trans "pages abbreviation" %}</td>
-    	        </tr>
+                        <td>{% trans "[publication date]" %}</td>
+                        <td>{{ book.published_at|date:"Y-m" }}</td>
+                </tr>
                 <tr>
-    	        	<td>{% trans "[tags]" %}</td>
-    	        	<td>{{ book.tagnames }}</td>
-    	        </tr>
+                        <td>{% trans "[price]" %}</td>
+                        <td>{{ book.price }} {% trans "currency unit" %}</td>
+                </tr>
                 <tr>
-    	        	<td>&nbsp;</td>
-    	        	<td> </td>
-    	        </tr>
+                        <td>{% trans "[pages]" %}</td>
+                        <td>{{ book.pages }} {% trans "pages abbreviation" %}</td>
+                </tr>
+                <tr>
+                        <td>{% trans "[tags]" %}</td>
+                        <td>{{ book.tagnames }}</td>
+                </tr>
+                <tr>
+                        <td>&nbsp;</td>
+                        <td> </td>
+                </tr>
                 {% if author_info.blog_url %}
                 <tr>
                     <td></td>
                     <td><a href="{{ author_info.blog_url }}" rel="nofollow" >{% trans "author blog" %} »</a></td>
-    	        </tr>
-                
+                </tr>
+
                 {% endif %}
                 <tr>
                     <td> </td>
                     <td><a href="#" rel="nofollow">{% trans "book directory" %} »</a></td>
-    	        </tr>
+                </tr>
                 <tr>
                     <td> </td>
                     <td><a href="#" rel="nofollow">{% trans "buy online" %} »</a></td>
-    	        </tr>
+                </tr>
             </table>
         </div>
         <div class="blogRss">
-    
+
         </div>
     </div>
-    
+
     <div class="bookQuestions">
-        
+
         <div class="tabBar">
             <div class="tabsB">
                 <a id="qa" class="on" title="{% trans "book technical Q&A %}" href="#">{% trans "reader questions" %}</a>
@@ -101,13 +101,13 @@
                 <a style="text-decoration: none;" href="/questions/{{question.id}}/{{question.get_question_title}}">
                     <div class="stats">
                         <div class="votes">
-                            <div class="vote-count-post">{{question.score|intcomma}}</div> 
+                            <div class="vote-count-post">{{question.score|intcomma}}</div>
                             {% trans "votes" %}
-                          
+
                         </div>
                         <div title="{% if question.answer_accepted %}{% trans "the answer has been accepted to be correct" %}{% endif %}" class="status {% if question.answer_accepted %}answered-accepted{% endif %} {% ifequal question.answer_count 0 %}unanswered{% endifequal %}{% ifnotequal question.answer_count 0 %}answered{% endifnotequal %}">
                             <div class="answer-count-post">{{question.answer_count|intcomma}}</div>
-							{% trans "answer" %}
+                                                        {% trans "answer" %}
 
                         </div>
                         <div class="views">
@@ -122,7 +122,7 @@
                     </h3>
                     <div class="tags">
                         {% for tag in question.tagname_list %}
-                        <a href="{% url forum.views.tag tag|urlencode %}" title="{% "see questions tagged with" %}'{{ tag }}'{% trans "using tags" %}" rel="tag">{{ tag }}</a>
+                        <a href="{% url cnprog.forum.views.tag tag|urlencode %}" title="{% "see questions tagged with" %}'{{ tag }}'{% trans "using tags" %}" rel="tag">{{ tag }}</a>
                         {% endfor %}
                     </div>
                     <div class="started">
@@ -140,7 +140,7 @@
 {% block tail %}
                         <div class="pager">
                             {% cnprog_paginator context %}
-                            
+
                         </div>
                         <div class="bookFeed">
                             <div id="feeds">

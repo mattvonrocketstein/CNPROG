@@ -44,7 +44,7 @@
 <ul class="tagsList tags">
 {% for tag in tags.object_list %}
    <li>
-    <a href="{% url forum.views.tag tag|urlencode %}" title="{% trans "see questions tagged" %}'{{ tag }}'{% trans "using tags" %}" rel="tag">
+    <a href="{% url cnprog.cnprog.forum.views.tag tag|urlencode %}" title="{% trans "see questions tagged" %}'{{ tag }}'{% trans "using tags" %}" rel="tag">
         {{ tag }}
     </a>&nbsp;
     <span class="tag-number">× {{ tag.used_count|intcomma }}</span>
@@ -59,6 +59,6 @@
 {% block tail %}
 <div class="pager">
     {% cnprog_paginator context %}
-</div>              
+</div>
 {% endblock %}
 <!-- end tags.html -->

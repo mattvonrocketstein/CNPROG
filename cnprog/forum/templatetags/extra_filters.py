@@ -1,5 +1,5 @@
 ﻿from django import template
-from forum import auth
+from cnprog.forum import auth
 
 register = template.Library()
 
@@ -42,11 +42,11 @@ def can_close_question(user, question):
 @register.filter
 def can_lock_posts(user):
     return auth.can_lock_posts(user)
-    
+
 @register.filter
 def can_accept_answer(user, question, answer):
     return auth.can_accept_answer(user, question, answer)
-    
+
 @register.filter
 def can_reopen_question(user, question):
     return auth.can_reopen_question(user, question)
@@ -54,23 +54,23 @@ def can_reopen_question(user, question):
 @register.filter
 def can_delete_post(user, post):
     return auth.can_delete_post(user, post)
-    
+
 @register.filter
 def can_view_user_edit(request_user, target_user):
     return auth.can_view_user_edit(request_user, target_user)
-    
+
 @register.filter
 def can_view_user_votes(request_user, target_user):
     return auth.can_view_user_votes(request_user, target_user)
-    
+
 @register.filter
 def can_view_user_preferences(request_user, target_user):
     return auth.can_view_user_preferences(request_user, target_user)
-    
+
 @register.filter
 def is_user_self(request_user, target_user):
     return auth.is_user_self(request_user, target_user)
-    
+
 @register.filter
 def cnprog_intword(number):
     try:

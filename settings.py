@@ -105,7 +105,7 @@ EMAIL_USE_TLS=True
 
 #LOCALIZATIONS
 TIME_ZONE = 'Asia/Chongqing Asia/Chungking'
-# LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'en-us'
 
 #OTHER SETTINGS
 APP_TITLE = u'CNProg'

@@ -22,14 +22,14 @@ import random
 import time
 
 import datetime
-from forum import auth
-from forum.auth import *
-from forum.const import *
-from forum.diff import textDiff as htmldiff
-from forum.forms import *
-from forum.models import *
-from forum.user import *
-from utils.html import sanitize_html
+from cnprog.forum import auth
+from cnprog.forum.auth import *
+from cnprog.forum.const import *
+from cnprog.forum.diff import textDiff as htmldiff
+from cnprog.forum.forms import *
+from cnprog.forum.models import *
+from cnprog.forum.user import *
+from cnprog.utils.html import sanitize_html
 
 # used in index page
 INDEX_PAGE_SIZE = 20
@@ -185,14 +185,14 @@ def create_new_answer(question=None, author=None, \
                     )
     if answer.wiki:
         answer.last_edited_by = answer.author
-        answer.last_edited_at = added_at 
-        answer.wikified_at = added_at 
+        answer.last_edited_at = added_at
+        answer.wikified_at = added_at
 
     answer.save()
 
     #update question data
-    question.last_activity_at = added_at 
-    question.last_activity_by = author 
+    question.last_activity_at = added_at
+    question.last_activity_by = author
     question.save()
     Question.objects.update_answer_count(question)
 
@@ -275,7 +275,7 @@ def ask(request):
             summary = strip_tags(html)[:120]
 
             if request.user.is_authenticated():
-                author = request.user 
+                author = request.user
 
                 question = create_new_question(
                                                title=title,
@@ -343,8 +343,8 @@ def question(request, id):
             vote_value = -1
             if vote.is_upvote():
                 vote_value = 1
-            user_answer_votes[vote.object_id] = vote_value      
-    
+            user_answer_votes[vote.object_id] = vote_value
+
     filtered_answers = []
     for answer in answers:
         if answer.deleted == True:
@@ -951,7 +951,7 @@ def vote(request, id):
                         feed.delete()
                     except EmailFeed.DoesNotExist:
                         pass
-                    
+
         else:
             response_data['success'] = 0
             response_data['message'] = u'Request mode is not supported. Please try again.'
@@ -1014,7 +1014,7 @@ def users(request):
 def user(request, id):
     sort = request.GET.get('sort', 'stats')
     user_view = dict((v.id, v) for v in USER_TEMPLATE_VIEWS).get(sort, USER_TEMPLATE_VIEWS[0])
-    from forum import views
+    from cnprog.forum import views
     func = getattr(views, user_view.view_name)
     return func(request, id, user_view)
 
@@ -1881,7 +1881,7 @@ def upload(request):
 
 def books(request):
     return HttpResponseRedirect("/books/mysql-zhaoyang")
-    
+
 def book(request, short_name, unanswered=False):
     """
     1. questions list
@@ -1908,7 +1908,7 @@ def book(request, short_name, unanswered=False):
         # set pagesize equal to logon user specified value in database
         if request.user.is_authenticated() and request.user.questions_per_page > 0:
             user_page_size = request.user.questions_per_page
-            
+
         try:
             page = int(request.GET.get('page', '1'))
         except ValueError:
@@ -1921,7 +1921,7 @@ def book(request, short_name, unanswered=False):
         except KeyError:
             view_id = "latest"
             orderby = "-added_at"
-            
+
         # check if request is from tagged questions
         if unanswered:
             # check if request is from unanswered questions
@@ -1989,7 +1989,7 @@ def ask_book(request, short_name):
                                             summary=CONST['default_version'],
                                             text=form.cleaned_data['text']
                                             )
-            
+
             books = Book.objects.extra(where=['short_name = %s'], params=[short_name])
             match_count = len(books)
             if match_count == 1:
@@ -2026,7 +2026,7 @@ def search(request):
         elif search_type == "user":
             return HttpResponseRedirect('/users/?q=%s&page=%s' % (keywords.strip(), page))
         elif search_type == "question":
-            
+
             template_file = "questions.html"
             # Set flag to False by default. If it is equal to True, then need to be saved.
             pagesize_changed = False
@@ -2062,7 +2062,7 @@ def search(request):
             except KeyError:
                 view_id = "latest"
                 orderby = "-added_at"
-                
+
             objects = Question.objects.filter(deleted=False).extra(where=['title like %s'], params=['%' + keywords + '%']).order_by(orderby)
 
             # RISK - inner join queries
@@ -2098,6 +2098,6 @@ def search(request):
                                       'base_url': request.path + '?t=question&q=%s&sort=%s&' % (keywords, view_id),
                                       'pagesize': pagesize
                                       }}, context_instance=RequestContext(request))
- 
+
     else:
         raise Http404

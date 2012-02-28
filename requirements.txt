@@ -1,0 +1,5 @@
+django==1.1
+html5lib==0.90
+python-openid
+markdown2
+#django_authopenid==0.9.4

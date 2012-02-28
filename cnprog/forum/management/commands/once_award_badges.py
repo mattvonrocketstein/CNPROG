@@ -17,8 +17,8 @@ from django.db import connection
 from django.shortcuts import get_object_or_404
 from django.contrib.contenttypes.models import ContentType
 
-from forum.models import *
-from forum.const import *
+from cnprog.forum.models import *
+from cnprog.forum.const import *
 from base_command import BaseCommand
 """
 (1, '炼狱法师', 3, '炼狱法师', '删除自己有3个以上赞成票的帖子', 1, 0),

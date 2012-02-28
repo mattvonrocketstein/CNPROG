@@ -18,8 +18,8 @@ from django.db import connection
 from django.shortcuts import get_object_or_404
 from django.contrib.contenttypes.models import ContentType
 
-from forum.models import *
-from forum.const import *
+from cnprog.forum.models import *
+from cnprog.forum.const import *
 
 class BaseCommand(NoArgsCommand):
     def update_activities_auditted(self, cursor, activity_ids):
@@ -28,8 +28,3 @@ class BaseCommand(NoArgsCommand):
             query = "UPDATE activity SET is_auditted = 1 WHERE id in (%s)"\
                     % ','.join('%s' % item for item in activity_ids)
             cursor.execute(query)
-    
- 
-        
-        
-        

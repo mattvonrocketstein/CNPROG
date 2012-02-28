@@ -15,7 +15,7 @@ from django.utils.translation import ugettext as _
 import django.dispatch
 import settings
 
-from forum.managers import *
+from cnprog.forum.managers import *
 from const import *
 
 class EmailFeed(models.Model):
@@ -194,7 +194,7 @@ class Question(models.Model):
 
     def get_question_title(self):
         if self.closed:
-            attr = CONST['closed'] 
+            attr = CONST['closed']
         elif self.deleted:
             attr = CONST['deleted']
         else:
@@ -209,7 +209,7 @@ class Question(models.Model):
 
     def get_latest_revision(self):
         return self.revisions.all()[0]
-    
+
     def get_user_votes_in_answers(self, user):
         content_type = ContentType.objects.get_for_model(Answer)
         query_set = Vote.objects.extra(
@@ -217,14 +217,14 @@ class Question(models.Model):
             where = ['question.id = answer.question_id AND question.id = %s AND vote.object_id = answer.id AND vote.content_type_id = %s AND vote.user_id = %s'],
             params = [self.id, content_type.id, user.id]
         )
-        
+
         return query_set
-        
+
     def get_update_summary(self,last_reported_at=None,recipient_email=''):
-        edited = False 
+        edited = False
         if self.last_edited_at and self.last_edited_at > last_reported_at:
             if self.last_edited_by.email != recipient_email:
-                edited = True 
+                edited = True
         comments = []
         for comment in self.comments.all():
             if comment.added_at > last_reported_at and comment.user.email != recipient_email:
@@ -238,8 +238,8 @@ class Question(models.Model):
         for answer in self.answers.all():
             if (answer.added_at > last_reported_at and answer.author.email != recipient_email):
                 new_answers.append(answer)
-            if (answer.last_edited_at 
-                and answer.last_edited_at > last_reported_at 
+            if (answer.last_edited_at
+                and answer.last_edited_at > last_reported_at
                 and answer.last_edited_by.email != recipient_email):
                 modified_answers.append(answer)
             for comment in answer.comments.all():
@@ -249,7 +249,7 @@ class Question(models.Model):
 
         #create the report
         if edited or comments or new_answers or modified_answers or answer_comments:
-            out = [] 
+            out = []
             if edited:
                 out.append(_('%(author)s modified the question') % {'author':self.last_edited_by.username})
             if new_answers:
@@ -325,7 +325,7 @@ class AnonymousAnswer(models.Model):
     summary = models.CharField(max_length=180)
 
     def publish(self,user):
-        from forum.views import create_new_answer
+        from cnprog.forum.views import create_new_answer
         added_at = datetime.datetime.now()
         print user.id
         create_new_answer(question=self.question,wiki=self.wiki,
@@ -345,7 +345,7 @@ class AnonymousQuestion(models.Model):
     author = models.ForeignKey(User,null=True)
 
     def publish(self,user):
-        from forum.views import create_new_question
+        from cnprog.forum.views import create_new_question
         added_at = datetime.datetime.now()
         create_new_question(title=self.title, author=user, added_at=added_at,
                                 wiki=self.wiki, tagnames=self.tagnames,
@@ -485,7 +485,7 @@ class Award(models.Model):
     awarded_at = models.DateTimeField(default=datetime.datetime.now)
     notified   = models.BooleanField(default=False)
     objects = AwardManager()
-    
+
     def __unicode__(self):
         return u'[%s] is awarded a badge [%s] at %s' % (self.user.username, self.badge.name, self.awarded_at)
 
@@ -544,10 +544,10 @@ class Book(models.Model):
     added_at = models.DateTimeField()
     last_edited_at = models.DateTimeField()
     questions = models.ManyToManyField(Question, related_name='book', db_table='book_question')
-    
+
     def get_absolute_url(self):
         return '%s' % reverse('book', args=[django_urlquote(self.short_name)])
-        
+
     def __unicode__(self):
         return self.title
     class Meta:
@@ -562,10 +562,10 @@ class BookAuthorInfo(models.Model):
     blog_url = models.CharField(max_length=255)
     added_at = models.DateTimeField()
     last_edited_at = models.DateTimeField()
-    
+
     class Meta:
         db_table = u'book_author_info'
-    
+
 class BookAuthorRss(models.Model):
     """
     Model for book author blog rss
@@ -576,7 +576,7 @@ class BookAuthorRss(models.Model):
     url = models.CharField(max_length=255)
     rss_created_at = models.DateTimeField()
     added_at = models.DateTimeField()
-    
+
     class Meta:
         db_table = u'book_author_rss'
 

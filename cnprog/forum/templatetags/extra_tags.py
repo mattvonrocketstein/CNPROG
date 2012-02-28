@@ -7,7 +7,7 @@ from django import template
 from django.utils.encoding import smart_unicode
 from django.utils.safestring import mark_safe
 from django.utils.timesince import timesince
-from forum.const import *
+from cnprog.forum.const import *
 from django.utils.translation import ugettext as _
 
 register = template.Library()
@@ -111,7 +111,7 @@ def cnprog_pagesize(context):
             "pagesize" : context["pagesize"],
             "is_paginated": context["is_paginated"]
         }
-        
+
 @register.simple_tag
 def get_score_badge(user):
     BADGE_TEMPLATE = '<span class="score" title="%(reputation)s %(reputationword)s">%(reputation)s</span>'
@@ -136,10 +136,10 @@ def get_score_badge(user):
         'gold' : user.gold,
         'silver' : user.silver,
         'bronze' : user.bronze,
-		'badgesword' : _('badges'),
-		'reputationword' : _('reputation points'),
+                'badgesword' : _('badges'),
+                'reputationword' : _('reputation points'),
     })
-    
+
 @register.simple_tag
 def get_score_badge_by_details(rep, gold, silver, bronze):
     BADGE_TEMPLATE = '<span class="reputation-score" title="%(reputation)s %(repword)s">%(reputation)s</span>'
@@ -164,17 +164,17 @@ def get_score_badge_by_details(rep, gold, silver, bronze):
         'gold' : gold,
         'silver' : silver,
         'bronze' : bronze,
-		'repword' : _('reputation points'),
-		'badgeword' : _('badges'),
-    })      
-    
+                'repword' : _('reputation points'),
+                'badgeword' : _('badges'),
+    })
+
 @register.simple_tag
 def get_user_vote_image(dic, key, arrow):
     if dic.has_key(key):
         if int(dic[key]) == int(arrow):
             return '-on'
     return ''
-        
+
 @register.simple_tag
 def get_age(birthday):
     current_time = datetime.datetime(*time.localtime()[0:6])
@@ -219,7 +219,7 @@ def diff_date(date, limen=2):
         return date
     else:
         return timesince(date) + _(' ago')
-        
+
 @register.simple_tag
 def get_latest_changed_timestamp():
     try:

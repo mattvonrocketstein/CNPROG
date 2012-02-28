@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2007, 2008, Benoît Chesneau
 # Copyright (c) 2007 Simon Willison, original work on django-openid
-# 
+#
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
 # met:
-# 
+#
 #      * Redistributions of source code must retain the above copyright
 #      * notice, this list of conditions and the following disclaimer.
 #      * Redistributions in binary form must reproduce the above copyright
@@ -17,7 +17,7 @@
 #      * of its contributors may be used to endorse or promote products
 #      * derived from this software without specific prior written
 #      * permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
 # IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
 # THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -68,7 +68,8 @@ from django_authopenid.forms import OpenidSigninForm, OpenidAuthForm, OpenidRegi
 
 def login(request,user):
     from django.contrib.auth import login as _login
-    from forum.models import user_logged_in #custom signal
+    # FIXME
+    from cnprog.forum.models import user_logged_in #custom signal
     #1) get old session key
     session_key = request.session.session_key
     #2) login and get new session key
@@ -92,7 +93,7 @@ def ask_openid(request, openid_url, redirect_to, on_failure=None,
     """ basic function to ask openid and return response """
     request.encoding = 'UTF-8'
     on_failure = on_failure or signin_failure
-    
+
     trust_root = getattr(
         settings, 'OPENID_TRUST_ROOT', get_url_host(request) + '/'
     )
@@ -117,12 +118,12 @@ def complete(request, on_success=None, on_failure=None, return_to=None):
     """ complete openid signin """
     on_success = on_success or default_on_success
     on_failure = on_failure or default_on_failure
-    
+
     consumer = Consumer(request.session, DjangoOpenIDStore())
     # make sure params are encoded in utf8
     params = dict((k,smart_unicode(v)) for k, v in request.GET.items())
     openid_response = consumer.complete(params, return_to)
-    
+
     if openid_response.status == SUCCESS:
         return on_success(request, openid_response.identity_url,
                 openid_response)
@@ -160,11 +161,11 @@ def not_authenticated(func):
 @not_authenticated
 def signin(request,newquestion=False,newanswer=False):
     """
-    signin page. It manage the legacy authentification (user/password) 
+    signin page. It manage the legacy authentification (user/password)
     and authentification with openid.
 
     url: /signin/
-    
+
     template : authopenid/signin.htm
     """
     request.encoding = 'UTF-8'
@@ -173,9 +174,9 @@ def signin(request,newquestion=False,newanswer=False):
 
     form_signin = OpenidSigninForm(initial={'next':next})
     form_auth = OpenidAuthForm(initial={'next':next})
-    
-    if request.POST:   
-        
+
+    if request.POST:
+
         if 'bsignin' in request.POST.keys() or 'openid_username' in request.POST.keys():
 
             form_signin = OpenidSigninForm(request.POST)
@@ -184,13 +185,13 @@ def signin(request,newquestion=False,newanswer=False):
                 sreg_req = sreg.SRegRequest(optional=['nickname', 'email'])
                 redirect_to = "%s%s?%s" % (
                         get_url_host(request),
-                        reverse('user_complete_signin'), 
+                        reverse('user_complete_signin'),
                         urllib.urlencode({'next':next})
                 )
-                return ask_openid(request, 
-                        form_signin.cleaned_data['openid_url'], 
-                        redirect_to, 
-                        on_failure=signin_failure, 
+                return ask_openid(request,
+                        form_signin.cleaned_data['openid_url'],
+                        redirect_to,
+                        on_failure=signin_failure,
                         sreg_request=sreg_req)
 
         elif 'blogin' in request.POST.keys():
@@ -204,14 +205,14 @@ def signin(request,newquestion=False,newanswer=False):
 
     question = None
     if newquestion == True:
-        from forum.models import AnonymousQuestion as AQ
+        from cnprog.forum.models import AnonymousQuestion as AQ #FIXME
         session_key = request.session.session_key
         qlist = AQ.objects.filter(session_key=session_key).order_by('-added_at')
         if len(qlist) > 0:
             question = qlist[0]
     answer = None
     if newanswer == True:
-        from forum.models import AnonymousAnswer as AA
+        from cnprog.forum.models import AnonymousAnswer as AA
         session_key = request.session.session_key
         alist = AA.objects.filter(session_key=session_key).order_by('-added_at')
         if len(alist) > 0:
@@ -236,7 +237,7 @@ def signin_success(request, identity_url, openid_response):
     """
     openid signin success.
 
-    If the openid is already registered, the user is redirected to 
+    If the openid is already registered, the user is redirected to
     url set par next or in settings with OPENID_REDIRECT_NEXT variable.
     If none of these urls are set user is redirectd to /.
 
@@ -254,7 +255,7 @@ def signin_success(request, identity_url, openid_response):
     if user_.is_active:
         user_.backend = "django.contrib.auth.backends.ModelBackend"
         login(request, user_)
-        
+
     next = clean_next(request.GET.get('next'))
     return HttpResponseRedirect(next)
 
@@ -272,7 +273,7 @@ def register(request):
     """
     register an openid.
 
-    If user is already a member he can associate its openid with 
+    If user is already a member he can associate its openid with
     its account.
 
     A new account could also be created and automaticaly associated
@@ -291,12 +292,12 @@ def register(request):
 
     nickname = openid_.sreg.get('nickname', '')
     email = openid_.sreg.get('email', '')
-    
+
     form1 = OpenidRegisterForm(initial={
         'next': next,
         'username': nickname,
         'email': email,
-    }) 
+    })
     form2 = OpenidVerifyForm(initial={
         'next': next,
         'username': nickname,
@@ -313,13 +314,13 @@ def register(request):
                 tmp_pwd = User.objects.make_random_password()
                 user_ = User.objects.create_user(form1.cleaned_data['username'],
                          form1.cleaned_data['email'], tmp_pwd)
-                
+
                 # make association with openid
                 uassoc = UserAssociation(openid_url=str(openid_),
                         user_id=user_.id)
                 uassoc.save()
-                    
-                # login 
+
+                # login
                 user_.backend = "django.contrib.auth.backends.ModelBackend"
                 login(request, user_)
         elif 'bverify' in request.POST.keys():
@@ -337,7 +338,7 @@ def register(request):
         #check if we need to post a question that was added anonymously
         #this needs to be a function call becase this is also done
         #if user just logged in and did not need to create the new account
-        
+
         if user_ != None and settings.EMAIL_VALIDATION == 'on':
             send_new_email_key(user_,nomessage=True)
             output = validation_email_sent(request)
@@ -347,7 +348,7 @@ def register(request):
             return HttpResponseRedirect('/')
         else:
             raise server_error('')
-    
+
     openid_str = str(openid_)
     bits = openid_str.split('/')
     base_url = bits[2] #assume this is base url
@@ -401,34 +402,34 @@ def signup(request):
     next = clean_next(request.GET.get('next'))
     form = RegistrationForm(initial={'next':next})
     form_signin = OpenidSigninForm(initial={'next':next})
-    
+
     if request.POST:
         form = RegistrationForm(request.POST)
         if form.is_valid():
             next = clean_next(form.cleaned_data.get('next'))
             user_ = User.objects.create_user( form.cleaned_data['username'],
                     form.cleaned_data['email'], form.cleaned_data['password1'])
-           
+
             user_.backend = "django.contrib.auth.backends.ModelBackend"
             login(request, user_)
-            
+
             # send email
             current_domain = Site.objects.get_current().domain
             subject = _("Welcome")
             message_template = loader.get_template(
                     'authopenid/confirm_email.txt'
             )
-            message_context = Context({ 
+            message_context = Context({
                 'site_url': 'http://%s/' % current_domain,
                 'username': form.cleaned_data['username'],
-                'password': form.cleaned_data['password1'] 
+                'password': form.cleaned_data['password1']
             })
             message = message_template.render(message_context)
-            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, 
+            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL,
                     [user_.email])
-            
+
             return HttpResponseRedirect(next)
-    
+
     return render('authopenid/signup.html', {
         'form': form,
         'form2': form_signin,
@@ -447,16 +448,16 @@ def signout(request):
         pass
     next = clean_next(request.GET.get('next'))
     logout(request)
-    
+
     return HttpResponseRedirect(next)
-    
+
 def xrdf(request):
     url_host = get_url_host(request)
     return_to = [
         "%s%s" % (url_host, reverse('user_complete_signin'))
     ]
-    return render('authopenid/yadis.xrdf', { 
-        'return_to': return_to 
+    return render('authopenid/yadis.xrdf', {
+        'return_to': return_to
         }, context_instance=RequestContext(request))
 
 @login_required
@@ -496,15 +497,15 @@ def changepw(request):
     url : /changepw/
     template: authopenid/changepw.html
     """
-    
+
     user_ = request.user
-    
+
     if request.POST:
         form = ChangepwForm(request.POST, user=user_)
         if form.is_valid():
             user_.set_password(form.cleaned_data['password1'])
             user_.save()
-            msg = _("Password changed.") 
+            msg = _("Password changed.")
             redirect = "%s?msg=%s" % (
                     reverse('user_account_settings'),
                     urlquote_plus(msg))
@@ -553,7 +554,7 @@ def _send_email_key(user):
 def send_new_email_key(user,nomessage=False):
     import random
     random.seed()
-    user.email_key = '%032x' % random.getrandbits(128) 
+    user.email_key = '%032x' % random.getrandbits(128)
     user.save()
     _send_email_key(user)
     if nomessage==False:
@@ -568,15 +569,15 @@ def send_email_key(request):
     email sending is called internally
 
     raises 404 if email validation is off
-    if current email is valid shows 'key_not_sent' view of 
+    if current email is valid shows 'key_not_sent' view of
     authopenid/changeemail.html template
     """
 
     if settings.EMAIL_VALIDATION != 'off':
         if request.user.email_isvalid:
             return render('authopenid/changeemail.html',
-                            { 'email': request.user.email, 
-                              'action_type': 'key_not_sent', 
+                            { 'email': request.user.email,
+                              'action_type': 'key_not_sent',
                               'change_link': reverse('user_changeemail')},
                               context_instance=RequestContext(request)
                               )
@@ -585,12 +586,12 @@ def send_email_key(request):
             return validation_email_sent(request)
     else:
         raise Http404
-   
+
 
 #internal server view used as return value by other views
 def validation_email_sent(request):
     return render('authopenid/changeemail.html',
-                    { 'email': request.user.email, 'action_type': 'validate', }, 
+                    { 'email': request.user.email, 'action_type': 'validate', },
                      context_instance=RequestContext(request))
 
 
@@ -613,7 +614,7 @@ def verifyemail(request,id=None,key=None):
 
 @login_required
 def changeemail(request):
-    """ 
+    """
     changeemail view. It require password or openid to allow change.
 
     url: /email/*
@@ -644,22 +645,22 @@ def changeemail(request):
                 #what does this branch do?
                 return server_error('')
                 request.session['new_email'] = form.cleaned_data['email']
-                return ask_openid(request, form.cleaned_data['password'], 
-                        redirect_to, on_failure=emailopenid_failure)    
+                return ask_openid(request, form.cleaned_data['password'],
+                        redirect_to, on_failure=emailopenid_failure)
 
     elif not request.POST and 'openid.mode' in request.GET:
-        return complete(request, emailopenid_success, 
-                emailopenid_failure, redirect_to) 
+        return complete(request, emailopenid_success,
+                emailopenid_failure, redirect_to)
     else:
         form = ChangeemailForm(initial={'email': user_.email},
                 user=user_)
 
-    
+
     output = render('authopenid/changeemail.html', {
         'form': form,
         'email': user_.email,
         'action_type': action,
-        'msg': msg 
+        'msg': msg
         }, context_instance=RequestContext(request))
 
     if action == 'validate':
@@ -677,14 +678,14 @@ def emailopenid_success(request, identity_url, openid_response):
                 openid_url__exact=identity_url
         )
     except:
-        return emailopenid_failure(request, 
+        return emailopenid_failure(request,
                 _("No OpenID %s found associated in our database" % identity_url))
 
     if uassoc.user.username != request.user.username:
-        return emailopenid_failure(request, 
-                _("The OpenID %s isn't associated to current user logged in" % 
+        return emailopenid_failure(request,
+                _("The OpenID %s isn't associated to current user logged in" %
                     identity_url))
-    
+
     new_email = request.session.get('new_email', '')
     if new_email:
         user_.email = new_email
@@ -695,17 +696,17 @@ def emailopenid_success(request, identity_url, openid_response):
     redirect = "%s?msg=%s" % (reverse('user_account_settings'),
             urlquote_plus(msg))
     return HttpResponseRedirect(redirect)
-    
+
 
 def emailopenid_failure(request, message):
     redirect_to = "%s?msg=%s" % (
             reverse('user_changeemail'), urlquote_plus(message))
     return HttpResponseRedirect(redirect_to)
- 
+
 @login_required
 def changeopenid(request):
     """
-    change openid view. Allow user to change openid 
+    change openid view. Allow user to change openid
     associated to its username.
 
     url : /changeopenid/
@@ -717,7 +718,7 @@ def changeopenid(request):
     openid_url = ''
     has_openid = True
     msg = request.GET.get('msg', '')
-        
+
     user_ = request.user
 
     try:
@@ -725,7 +726,7 @@ def changeopenid(request):
         openid_url = uopenid.openid_url
     except:
         has_openid = False
-    
+
     redirect_to = get_url_host(request) + reverse('user_changeopenid')
     if request.POST and has_openid:
         form = ChangeopenidForm(request.POST, user=user_)
@@ -735,13 +736,13 @@ def changeopenid(request):
     elif not request.POST and has_openid:
         if 'openid.mode' in request.GET:
             return complete(request, changeopenid_success,
-                    changeopenid_failure, redirect_to)    
+                    changeopenid_failure, redirect_to)
 
     form = ChangeopenidForm(initial={'openid_url': openid_url }, user=user_)
     return render('authopenid/changeopenid.html', {
         'form': form,
-        'has_openid': has_openid, 
-        'msg': msg 
+        'has_openid': has_openid,
+        'msg': msg
         }, context_instance=RequestContext(request))
 
 def changeopenid_success(request, identity_url, openid_response):
@@ -751,7 +752,7 @@ def changeopenid_success(request, identity_url, openid_response):
         uassoc = UserAssociation.objects.get(openid_url__exact=identity_url)
     except:
         is_exist = False
-        
+
     if not is_exist:
         try:
             uassoc = UserAssociation.objects.get(
@@ -760,33 +761,33 @@ def changeopenid_success(request, identity_url, openid_response):
             uassoc.openid_url = identity_url
             uassoc.save()
         except:
-            uassoc = UserAssociation(user=request.user, 
+            uassoc = UserAssociation(user=request.user,
                     openid_url=identity_url)
             uassoc.save()
     elif uassoc.user.username != request.user.username:
-        return changeopenid_failure(request, 
+        return changeopenid_failure(request,
                 _('This OpenID is already associated with another account.'))
 
     request.session['openids'] = []
     request.session['openids'].append(openid_)
 
-    msg = _("OpenID %s is now associated with your account." % identity_url) 
+    msg = _("OpenID %s is now associated with your account." % identity_url)
     redirect = "%s?msg=%s" % (
-            reverse('user_account_settings'), 
+            reverse('user_account_settings'),
             urlquote_plus(msg))
     return HttpResponseRedirect(redirect)
-    
+
 
 def changeopenid_failure(request, message):
     redirect_to = "%s?msg=%s" % (
-            reverse('user_changeopenid'), 
+            reverse('user_changeopenid'),
             urlquote_plus(message))
     return HttpResponseRedirect(redirect_to)
-  
+
 @login_required
 def delete(request):
     """
-    delete view. Allow user to delete its account. Password/openid are required to 
+    delete view. Allow user to delete its account. Password/openid are required to
     confirm it. He should also check the confirm checkbox.
 
     url : /delete
@@ -795,29 +796,29 @@ def delete(request):
     """
 
     extension_args = {}
-    
+
     user_ = request.user
 
-    redirect_to = get_url_host(request) + reverse('user_delete') 
+    redirect_to = get_url_host(request) + reverse('user_delete')
     if request.POST:
         form = DeleteForm(request.POST, user=user_)
         if form.is_valid():
             if not form.test_openid:
-                user_.delete() 
+                user_.delete()
                 return signout(request)
             else:
                 return ask_openid(request, form.cleaned_data['password'],
                         redirect_to, on_failure=deleteopenid_failure)
     elif not request.POST and 'openid.mode' in request.GET:
         return complete(request, deleteopenid_success, deleteopenid_failure,
-                redirect_to) 
-    
+                redirect_to)
+
     form = DeleteForm(user=user_)
 
     msg = request.GET.get('msg','')
     return render('authopenid/delete.html', {
-        'form': form, 
-        'msg': msg, 
+        'form': form,
+        'msg': msg,
         }, context_instance=RequestContext(request))
 
 def deleteopenid_success(request, identity_url, openid_response):
@@ -837,13 +838,13 @@ def deleteopenid_success(request, identity_url, openid_response):
         return signout(request)
     else:
         return deleteopenid_failure(request,
-                _("The OpenID %s isn't associated to current user logged in" % 
+                _("The OpenID %s isn't associated to current user logged in" %
                     identity_url))
-    
-    msg = _("Account deleted.") 
+
+    msg = _("Account deleted.")
     redirect = "/?msg=%s" % (urlquote_plus(msg))
     return HttpResponseRedirect(redirect)
-    
+
 
 def deleteopenid_failure(request, message):
     redirect_to = "%s?msg=%s" % (reverse('user_delete'), urlquote_plus(message))
@@ -852,8 +853,8 @@ def deleteopenid_failure(request, message):
 
 def sendpw(request):
     """
-    send a new password to the user. It return a mail with 
-    a new pasword and a confirm link in. To activate the 
+    send a new password to the user. It return a mail with
+    a new pasword and a confirm link in. To activate the
     new password, the user should click on confirm link.
 
     url : /sendpw/
@@ -878,12 +879,12 @@ def sendpw(request):
             uqueue.new_password = new_pw
             uqueue.confirm_key = confirm_key
             uqueue.save()
-            # send email 
+            # send email
             current_domain = Site.objects.get_current().domain
             subject = _("Request for new password")
             message_template = loader.get_template(
                     'authopenid/sendpw_email.txt')
-            message_context = Context({ 
+            message_context = Context({
                 'site_url': 'http://%s' % current_domain,
                 'confirm_key': confirm_key,
                 'username': form.user_cache.username,
@@ -891,15 +892,15 @@ def sendpw(request):
                 'url_confirm': reverse('user_confirmchangepw'),
             })
             message = message_template.render(message_context)
-            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, 
+            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL,
                     [form.user_cache.email])
             msg = _("A new password has been sent to your email address.")
     else:
         form = EmailPasswordForm()
-        
+
     return render('authopenid/sendpw.html', {
         'form': form,
-        'msg': msg 
+        'msg': msg
         }, context_instance=RequestContext(request))
 
 
@@ -924,7 +925,7 @@ def confirmchangepw(request):
         )
     except:
         msg = _("Could not change password. Confirmation key '%s'\
-                is not registered." % confirm_key) 
+                is not registered." % confirm_key)
         redirect = "%s?msg=%s" % (
                 reverse('user_sendpw'), urlquote_plus(msg))
         return HttpResponseRedirect(redirect)
@@ -933,17 +934,17 @@ def confirmchangepw(request):
         user_ = User.objects.get(id=uqueue.user.id)
     except:
         msg = _("Can not change password. User don't exist anymore \
-                in our database.") 
-        redirect = "%s?msg=%s" % (reverse('user_sendpw'), 
+                in our database.")
+        redirect = "%s?msg=%s" % (reverse('user_sendpw'),
                 urlquote_plus(msg))
         return HttpResponseRedirect(redirect)
 
     user_.set_password(uqueue.new_password)
     user_.save()
     uqueue.delete()
-    msg = _("Password changed for %s. You may now sign in." % 
-            user_.username) 
-    redirect = "%s?msg=%s" % (reverse('user_signin'), 
+    msg = _("Password changed for %s. You may now sign in." %
+            user_.username)
+    redirect = "%s?msg=%s" % (reverse('user_signin'),
                                         urlquote_plus(msg))
 
     return HttpResponseRedirect(redirect)

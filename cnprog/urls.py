@@ -1,9 +1,13 @@
+"""
+"""
+
 import os.path
+
 from django.conf.urls.defaults import *
 from django.contrib import admin
-from forum.views import index
-from forum import views as app
-from forum.feed import RssLastestQuestionsFeed
+from cnprog.forum.views import index
+from cnprog.forum import views as app
+from cnprog.forum.feed import RssLastestQuestionsFeed
 
 admin.autodiscover()
 feeds = {

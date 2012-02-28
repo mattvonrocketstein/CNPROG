@@ -3,30 +3,30 @@ import logging
 from django.contrib.auth.models import User, UserManager
 from django.db import connection, models, transaction
 from django.db.models import Q
-from forum.models import *
+from cnprog.forum.models import *
 from urllib import quote, unquote
 
 class QuestionManager(models.Manager):
     def get_translation_questions(self, orderby, page_size):
         questions = self.filter(deleted=False, author__id__in=[28,29]).order_by(orderby)[:page_size]
         return questions
-    
+
     def get_questions_by_pagesize(self, orderby, page_size):
         questions = self.filter(deleted=False).order_by(orderby)[:page_size]
         return questions
-    
+
     def get_questions_by_tag(self, tagname, orderby):
         questions = self.filter(deleted=False, tags__name = unquote(tagname)).order_by(orderby)
         return questions
-    
+
     def get_unanswered_questions(self, orderby):
         questions = self.filter(deleted=False, answer_count=0).order_by(orderby)
         return questions
-    
+
     def get_questions(self, orderby):
         questions = self.filter(deleted=False).order_by(orderby)
         return questions
-    
+
     def update_tags(self, question, tagnames, user):
         """
         Updates Tag associations for a question to match the given
@@ -35,7 +35,7 @@ class QuestionManager(models.Manager):
         Returns ``True`` if tag usage counts were updated as a result,
         ``False`` otherwise.
         """
-        from forum.models import Tag
+        from cnprog.forum.models import Tag
         current_tags = list(question.tags.all())
         current_tagnames = set(t.name for t in current_tags)
         updated_tagnames = set(t for t in tagnames.split(' ') if t)
@@ -65,26 +65,26 @@ class QuestionManager(models.Manager):
         Executes an UPDATE query to update denormalised data with the
         number of answers the given question has.
         """
-        
+
         # for some reasons, this Answer class failed to be imported,
         # although we have imported all classes from models on top.
-        from forum.models import Answer
+        from cnprog.forum.models import Answer
         self.filter(id=question.id).update(
             answer_count=Answer.objects.get_answers_from_question(question).count())
-    
+
     def update_view_count(self, question):
         """
         update counter+1 when user browse question page
         """
         self.filter(id=question.id).update(view_count = question.view_count + 1)
-    
+
     def update_favorite_count(self, question):
         """
         update favourite_count for given question
         """
-        from forum.models import FavoriteQuestion
+        from cnprog.forum.models import FavoriteQuestion
         self.filter(id=question.id).update(favourite_count = FavoriteQuestion.objects.filter(question=question).count())
-        
+
     def get_similar_questions(self, question):
         """
         Get 10 similar questions for given one.
@@ -92,7 +92,7 @@ class QuestionManager(models.Manager):
         Questions with the individual tags will be added to list if above questions are not full.
         """
         #print datetime.datetime.now()
-        from forum.models import Question
+        from cnprog.forum.models import Question
         questions = list(Question.objects.filter(tagnames = question.tagnames).all())
 
         tags_list = question.tags.all()
@@ -101,10 +101,10 @@ class QuestionManager(models.Manager):
             for item in extend_questions:
                 if item not in questions and len(questions) < 10:
                     questions.append(item)
-          
+
         #print datetime.datetime.now()
-        return questions    
-    
+        return questions
+
 class TagManager(models.Manager):
     UPDATE_USED_COUNTS_QUERY = (
         'UPDATE tag '
@@ -113,12 +113,12 @@ class TagManager(models.Manager):
             'WHERE tag_id = tag.id'
         ') '
         'WHERE id IN (%s)')
-    
+
     def get_valid_tags(self, page_size):
-      from forum.models import Tag
+      from cnprog.forum.models import Tag
       tags = Tag.objects.all().filter(deleted=False).exclude(used_count=0).order_by("-id")[:page_size]
       return tags
-    
+
     def get_or_create_multiple(self, names, user):
         """
         Fetches a list of Tags with the given names, creating any Tags
@@ -132,13 +132,13 @@ class TagManager(models.Manager):
                 tag.deleted_by = None
                 tag.deleted_at = None
                 tag.save()
-                
+
         if len(tags) < len(names):
             existing_names = set(tag.name for tag in tags)
             new_names = [name for name in names if name not in existing_names]
             tags.extend([self.create(name=name, created_by=user)
                          for name in new_names if self.filter(name=name).count() == 0 and len(name.strip()) > 0])
-             
+
         return tags
 
     def update_use_counts(self, tags):
@@ -149,7 +149,7 @@ class TagManager(models.Manager):
         query = self.UPDATE_USED_COUNTS_QUERY % ','.join(['%s'] * len(tags))
         cursor.execute(query, [tag.id for tag in tags])
         transaction.commit_unless_managed()
-    
+
     def get_tags_by_questions(self, questions):
         question_ids = []
         for question in questions:
@@ -160,7 +160,7 @@ class TagManager(models.Manager):
                 tables=['tag', 'question_tags'],
                 where=["tag.id = question_tags.tag_id AND question_tags.question_id IN (" + question_ids_str + ")"]
         ).distinct()
-        
+
         return related_tags
 
 class AnswerManager(models.Manager):
@@ -169,7 +169,7 @@ class AnswerManager(models.Manager):
         """
         Retrieves visibile answers for the given question. Delete answers
         are only visibile to the person who deleted them.
-        """   
+        """
         if user is None or not user.is_authenticated():
             q = self.filter(question=question, deleted=False)
         else:
@@ -181,7 +181,7 @@ class AnswerManager(models.Manager):
             q = q.order_by("-accepted", other_orderby)
 
         return q
-                               
+
     def get_answers_from_questions(self, user_id):
         """
         Retrieves visibile answers for the given question. Which are not included own answers
@@ -202,7 +202,7 @@ class VoteManager(models.Manager):
             return row[0]
         else:
             return 0
-    
+
     def get_down_vote_count_from_user(self, user):
         if user is not None:
             cursor = connection.cursor()
@@ -211,7 +211,7 @@ class VoteManager(models.Manager):
             return row[0]
         else:
             return 0
-            
+
     def get_votes_count_today_from_user(self, user):
         if user is not None:
             cursor = connection.cursor()
@@ -221,7 +221,7 @@ class VoteManager(models.Manager):
 
         else:
             return 0
-            
+
 class FlaggedItemManager(models.Manager):
     COUNT_FLAGS_PER_DAY_BY_USER = "SELECT COUNT(*) FROM flagged_item WHERE user_id = %s AND DATE(flagged_at) = DATE(NOW())"
     def get_flagged_items_count_today(self, user):
@@ -238,7 +238,7 @@ class ReputeManager(models.Manager):
     COUNT_REPUTATION_PER_DAY_BY_USER = "SELECT SUM(positive)+SUM(negative) FROM repute WHERE user_id = %s AND (reputation_type=1 OR reputation_type=-8) AND DATE(reputed_at) = DATE(NOW())"
     def get_reputation_by_upvoted_today(self, user):
         """
-        For one user in one day, he can only earn rep till certain score (ep. +200) 
+        For one user in one day, he can only earn rep till certain score (ep. +200)
         by upvoted(also substracted from upvoted canceled). This is because we need
         to prohibit gaming system by upvoting/cancel again and again.
         """
@@ -249,7 +249,7 @@ class ReputeManager(models.Manager):
             return row[0]
 
         else:
-            return 0    
+            return 0
 class AwardManager(models.Manager):
     def get_recent_awards(self):
         awards = super(AwardManager, self).extra(
